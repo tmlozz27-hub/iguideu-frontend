@@ -1,26 +1,37 @@
-﻿import { getReservations } from "../lib/reservations";
-import { guides } from "../lib/data";
+﻿import { listReservations } from "../lib/reservations";
+import { getGuide } from "../lib/data";
 
-export default function Reservations() {
-  const list = getReservations();
+export default function Reservations(){
+  const rows = listReservations().map(r => ({
+    ...r,
+    guide: getGuide(r.guideId)?.name ?? r.guideId
+  }));
+
   return (
-    <div style={{ fontFamily:"system-ui,Segoe UI,Arial", maxWidth: 900, margin:"32px auto", padding:16 }}>
-      <h1>Mis reservas</h1>
-      {list.length === 0 && <p>No tenés reservas aún.</p>}
-      <div style={{ display:"grid", gap:12 }}>
-        {list.map(r => {
-          const g = guides.find(x => x.id === r.guideId);
-          return (
-            <div key={r.id} style={{ border:"1px solid #ddd", borderRadius:12, padding:16 }}>
-              <div><strong>Guía:</strong> {g ? g.name : r.guideId}</div>
-              <div><strong>Fecha:</strong> {r.date} — <strong>Horas:</strong> {r.hours}</div>
-              <div><strong>Notas:</strong> {r.notes || "-"}</div>
-              <div><strong>Importe:</strong> ${r.amount} ARS</div>
-              <div style={{ color:"#777", marginTop:6 }}><small>ID: {r.id}</small></div>
-            </div>
-          );
-        })}
-      </div>
+    <div style={{ fontFamily:"system-ui,Segoe UI,Arial", maxWidth: 900, margin:"24px auto", padding:16 }}>
+      <h2>Mis Reservas</h2>
+      {rows.length === 0 ? (
+        <p>Aún no tenés reservas.</p>
+      ) : (
+        <table border="1" cellPadding="6" style={{ borderCollapse:"collapse", width:"100%" }}>
+          <thead>
+            <tr>
+              <th>ID</th><th>Guía</th><th>Fecha</th><th>PAX</th><th>Creada</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(r => (
+              <tr key={r.id}>
+                <td>{r.id}</td>
+                <td>{r.guide}</td>
+                <td>{r.date}</td>
+                <td>{r.pax}</td>
+                <td>{new Date(r.ts).toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }
