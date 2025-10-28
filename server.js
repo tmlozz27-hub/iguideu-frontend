@@ -1,37 +1,39 @@
-﻿// ===== CORS SÚPER EXPLÍCITO PARA DEV + PREVIEW =====
-import cors from "cors";
+﻿// server.js — servidor de desarrollo simple (Express) para tu frontend web/prueba
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const ALLOWED_ORIGINS = [
-  "http://127.0.0.1:5177",
-  "http://localhost:5177",
-  "http://192.168.0.4:5177",
-  "http://127.0.0.1:5178",
-  "http://localhost:5178",
-  "http://192.168.0.4:5178"
-];
+// ==== Config base ====
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const dynamicCors = cors({
-  origin(origin, cb) {
-    // Permite herramientas tipo curl/PowerShell sin Origin
-    if (!origin) return cb(null, true);
-    // Permite si está en la lista
-    if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-    // (Opcional) Permite previews hospedados (ajusta dominio si usas otro)
-    try {
-      const host = new URL(origin).hostname;
-      if (host.endsWith(".onrender.com")) return cb(null, true);
-      if (host.endsWith(".netlify.app")) return cb(null, true);
-      if (host.endsWith(".vercel.app")) return cb(null, true);
-    } catch (e) {}
-    return cb(new Error("CORS not allowed for origin: " + origin));
-  },
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "x-admin-key"],
-  credentials: false,
-  maxAge: 86400
+const app = express(); // <<< ESTA LÍNEA FALTABA
+
+// ==== CORS dinámico para permitir probar desde LAN o túnel ====
+function dynamicCors(req, res, next) {
+  const origin = req.headers.origin || '*';
+  res.header('Access-Control-Allow-Origin', origin);
+  res.header('Vary', 'Origin');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Stripe-Signature');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+}
+
+app.use(dynamicCors); // <<< ahora sí existe app
+
+// ==== Archivos estáticos (si usás una carpeta web/dist opcional) ====
+// app.use(express.static(path.join(__dirname, 'web')));
+
+// Salud
+app.get('/health', (_req, res) => {
+  res.json({ ok: true, server: 'frontend-dev', ts: new Date().toISOString() });
 });
 
-// Aplica CORS y responde a OPTIONS
-app.use(dynamicCors);
-app.options("*", dynamicCors);
-// ===== FIN CORS =====
+// Arranque
+const PORT = process.env.FRONTEND_PORT || 5173;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ FRONTEND dev server ON http://0.0.0.0:${PORT}`);
+});
+

@@ -1,18 +1,24 @@
-import { defineConfig } from "vite";
+﻿import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: "127.0.0.1",
-    port: 5173,
-    strictPort: true,   // si 5173 está ocupado, falla en vez de abrir otro
-    // open: "/pay",     // (quitado para que no abra nuevas ventanas solo)
+    host: "0.0.0.0",
+    port: 5178,
+    strictPort: true,
+    cors: true,
+    proxy: {
+      "/api": {
+        target: "http://127.0.0.1:4025",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   preview: {
-    host: "127.0.0.1",
-    port: 5176,
-    strictPort: true,
-    // open: "/pay",
+    host: "0.0.0.0",
+    port: 5178,
   },
 });
+

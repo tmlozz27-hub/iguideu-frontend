@@ -19,10 +19,16 @@ export default function GuideDetail(){
     );
   }
 
-  const onReserve = () => {
+  const onReserve = async () => {
+    setOut("");
     if(!date) return setOut("Elegí fecha.");
-    const r = addReservation({ guideId: g.id, date, pax });
-    setOut("Reserva creada: "+r.id);
+    try {
+      const r = await addReservation({ guideId: g.id, date, pax: Number(pax) });
+      if (r?.ok && r?.id) setOut("Reserva creada: " + r.id + (r.stub ? " (stub local)" : ""));
+      else setOut("No se pudo crear la reserva.");
+    } catch (e) {
+      setOut("Error: " + (e?.message || "desconocido"));
+    }
   };
 
   return (
