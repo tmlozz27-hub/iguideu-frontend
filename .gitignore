@@ -1,0 +1,9 @@
+# deps & builds
+node_modules/
+dist/
+
+# env local (en Render lo seteás como variable)
+.env
+
+# vite cache
+.vite/
