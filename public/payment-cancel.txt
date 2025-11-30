@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Pago cancelado – I GUIDE U</title>
+</head>
+<body>
+  <h1>⚠️ Pago cancelado</h1>
+  <p>Cancelaste el pago en Stripe. Puedes volver a intentar más tarde.</p>
+
+  <p><a href="/">Volver a la app</a></p>
+</body>
+</html>

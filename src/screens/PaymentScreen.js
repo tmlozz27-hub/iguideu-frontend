@@ -1,79 +1,190 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Linking, Alert } from 'react-native';
-import { API_BASE_URL } from '../config'; // ✅ importa URL desde config.js
+import React, { useState } from "react";
 
-const API_BASE = API_BASE_URL; // ✅ usa la IP o túnel configurado
+const API_BASE = "https://iguideu-backend-1.onrender.com";
 
 export default function PaymentScreen() {
-  const [amount, setAmount] = useState('10.00');
-  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState("idle"); // idle | loading | ok | error
+  const [message, setMessage] = useState("");
 
-  const createCheckout = async () => {
+  async function handlePay() {
+    setStatus("loading");
+    setMessage("Creando Checkout en Stripe (USD 10)...");
+
     try {
-      setLoading(true);
-      // convierte 10.00 → 1000 (centavos)
-      const cents = Math.round(parseFloat(amount.replace(',', '.')) * 100);
-      if (isNaN(cents) || cents <= 0) {
-        Alert.alert('Importe inválido', 'Ingresa un monto mayor a 0');
-        setLoading(false);
+      const resp = await fetch(`${API_BASE}/api/payments/create-checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          // valores fijos de test; más adelante los llenamos con la reserva real
+          successUrl: `${API_BASE}/api/payments/test-success`,
+          cancelUrl: `${API_BASE}/api/payments/test-cancel`,
+        }),
+      });
+
+      const text = await resp.text();
+
+      if (!resp.ok) {
+        setStatus("error");
+        setMessage(`Error (${resp.status}): ${text}`);
         return;
       }
 
-      const resp = await fetch(`${API_BASE}/api/payments/create-checkout`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: cents, currency: 'usd' }),
-      });
-
-      const data = await resp.json();
-      if (!resp.ok || !data?.ok || !data?.url) {
-        console.log('Respuesta backend:', data);
-        throw new Error('No se pudo crear la sesión de Checkout');
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        setStatus("error");
+        setMessage(`Respuesta inesperada del backend: ${text}`);
+        return;
       }
 
-      // abrir Stripe Checkout en el móvil
-      const supported = await Linking.canOpenURL(data.url);
-      if (!supported) {
-        Alert.alert('Error', 'No se puede abrir la URL de Stripe.');
+      if (data && data.url) {
+        setStatus("ok");
+        setMessage("Checkout creado. Redirigiendo a Stripe...");
+        window.location.href = data.url;
       } else {
-        await Linking.openURL(data.url);
+        setStatus("error");
+        setMessage("El backend no devolvió URL de Stripe.");
       }
-    } catch (e) {
-      console.error(e);
-      Alert.alert('Error', e.message || 'Fallo creando el checkout');
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      setStatus("error");
+      setMessage(`Error de red: ${err.message}`);
     }
-  };
+  }
+
+  const isLoading = status === "loading";
 
   return (
-    <View style={{ flex: 1, padding: 24, backgroundColor: '#fff', gap: 16 }}>
-      <Text style={{ fontSize: 24, fontWeight: '600', marginBottom: 8 }}>Pagar con Stripe</Text>
-
-      <Text style={{ color: '#555' }}>Importe (USD)</Text>
-      <TextInput
-        value={amount}
-        onChangeText={setAmount}
-        keyboardType="decimal-pad"
-        placeholder="10.00"
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "#f3f4f6",
+        padding: 16,
+      }}
+    >
+      <div
         style={{
-          borderWidth: 1,
-          borderColor: '#ddd',
-          padding: 12,
-          borderRadius: 8,
-          fontSize: 18,
+          maxWidth: 420,
+          width: "100%",
+          background: "#ffffff",
+          borderRadius: 16,
+          padding: 24,
+          boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+          fontFamily:
+            'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
         }}
-      />
+      >
+        <h1
+          style={{
+            fontSize: 22,
+            marginTop: 0,
+            marginBottom: 8,
+            color: "#111827",
+          }}
+        >
+          Reserva con guía (test)
+        </h1>
 
-      <Button
-        title={loading ? 'Creando...' : 'Ir a Checkout'}
-        onPress={createCheckout}
-        disabled={loading}
-      />
+        <p style={{ marginTop: 0, marginBottom: 16, color: "#4b5563" }}>
+          Este es un pago de <strong>prueba</strong> de I GUIDE U usando Stripe.
+        </p>
 
-      <Text style={{ color: '#888', marginTop: 16 }}>
-        Usa tarjeta de prueba: 4242 4242 4242 4242 · fecha futura · CVC 123 · ZIP 12345
-      </Text>
-    </View>
+        <div
+          style={{
+            borderRadius: 12,
+            border: "1px solid #e5e7eb",
+            padding: 16,
+            marginBottom: 20,
+            background: "#f9fafb",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: 6,
+            }}
+          >
+            <span style={{ color: "#6b7280" }}>Concepto</span>
+            <span style={{ fontWeight: 600, color: "#111827" }}>
+              Reserva con guía (test)
+            </span>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: 6,
+            }}
+          >
+            <span style={{ color: "#6b7280" }}>Importe</span>
+            <span style={{ fontWeight: 700, color: "#111827" }}>
+              USD 10.00
+            </span>
+          </div>
+          <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
+            No se realizará ningún cobro real. Es solo para probar el flujo
+            completo de pago.
+          </div>
+        </div>
+
+        <button
+          onClick={handlePay}
+          disabled={isLoading}
+          style={{
+            width: "100%",
+            padding: "10px 16px",
+            borderRadius: 9999,
+            border: "none",
+            cursor: isLoading ? "default" : "pointer",
+            fontWeight: 600,
+            fontSize: 15,
+            background: "#111827",
+            color: "#ffffff",
+          }}
+        >
+          {isLoading ? "Conectando con Stripe..." : "Pagar con Stripe (test USD 10)"}
+        </button>
+
+        {message && (
+          <div
+            style={{
+              marginTop: 16,
+              fontSize: 13,
+              padding: 10,
+              borderRadius: 8,
+              background:
+                status === "error"
+                  ? "#fef2f2"
+                  : status === "ok"
+                  ? "#ecfdf3"
+                  : "#eff6ff",
+              color:
+                status === "error"
+                  ? "#b91c1c"
+                  : status === "ok"
+                  ? "#166534"
+                  : "#1d4ed8",
+            }}
+          >
+            {message}
+          </div>
+        )}
+
+        <p
+          style={{
+            marginTop: 18,
+            fontSize: 11,
+            color: "#9ca3af",
+            textAlign: "center",
+          }}
+        >
+          Modo test · Stripe · I GUIDE U 24
+        </p>
+      </div>
+    </div>
   );
 }

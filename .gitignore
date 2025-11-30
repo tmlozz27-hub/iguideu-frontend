@@ -1,4 +1,16 @@
+<<<<<<< HEAD
 ﻿node_modules
 dist
 .vite
 .DS_Store
+=======
+# deps & builds
+node_modules/
+dist/
+
+# env local (en Render lo seteás como variable)
+.env
+
+# vite cache
+.vite/
+>>>>>>> e3075b6 (feat(front): Vite + checkout Stripe (VITE_API_BASE via .env))

@@ -1,12 +1,12 @@
-﻿import React from "react";
-import Checkout from "./components/Checkout.jsx";
+import ApiTestPanel from './components/ApiTestPanel.jsx';
+import GuideList from './components/GuideList.jsx';
 
 export default function App() {
   return (
-    <main style={{ padding: 24, fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial" }}>
-      <h1 style={{ margin: 0, fontSize: 28 }}>I GUIDE U – Checkout</h1>
-      <p style={{ color: "#666", marginTop: 4 }}>Pago de prueba con Stripe (USD 10.00)</p>
-      <Checkout />
-    </main>
+    <div style={{ minHeight: '100vh', background: '#f5f5f5' }}>
+      <ApiTestPanel />
+      <hr style={{ margin: '2rem 0' }} />
+      <GuideList />
+    </div>
   );
 }

@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Pago exitoso – I GUIDE U</title>
+</head>
+<body>
+  <h1>✅ Pago realizado con éxito</h1>
+  <p>Tu pago de prueba en Stripe se completó correctamente.</p>
+
+  <p><a href="/">Volver a la app</a></p>
+</body>
+</html>

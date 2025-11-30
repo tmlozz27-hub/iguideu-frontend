@@ -1,39 +1,53 @@
-﻿// server.js — servidor de desarrollo simple (Express) para tu frontend web/prueba
-import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
+﻿const express = require("express");
+const path = require("path");
+const app = express();
 
-// ==== Config base ====
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const PORT = 5181;
 
-const app = express(); // <<< ESTA LÍNEA FALTABA
+// Carpeta del frontend
+app.use(express.static(path.join(__dirname)));
 
-// ==== CORS dinámico para permitir probar desde LAN o túnel ====
-function dynamicCors(req, res, next) {
-  const origin = req.headers.origin || '*';
-  res.header('Access-Control-Allow-Origin', origin);
-  res.header('Vary', 'Origin');
-  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Stripe-Signature');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  if (req.method === 'OPTIONS') return res.sendStatus(204);
-  next();
-}
+// Reemplazo seguro de create-checkout dentro del HTML generado
+app.get("/", (req, res) => {
+  let html = `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8">
+    <title>I GUIDE U – Frontend</title>
+  </head>
+  <body>
+    <h1>Frontend cargado desde server.js</h1>
+    <button onclick="pay()">Test Pago Stripe</button>
 
-app.use(dynamicCors); // <<< ahora sí existe app
+    <script>
+      async function pay() {
+        try {
+          const res = await fetch("https://iguideu-backend-1.onrender.com/api/payments/create-checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({})
+          });
 
-// ==== Archivos estáticos (si usás una carpeta web/dist opcional) ====
-// app.use(express.static(path.join(__dirname, 'web')));
+          const data = await res.json();
 
-// Salud
-app.get('/health', (_req, res) => {
-  res.json({ ok: true, server: 'frontend-dev', ts: new Date().toISOString() });
+          if (data.url) {
+            window.location.href = data.url;
+          } else {
+            alert("Error: backend no devolvió URL de Stripe");
+          }
+        } catch (err) {
+          alert("Error al llamar a /api/payments/create-checkout: " + err.message);
+        }
+      }
+    </script>
+  </body>
+  </html>
+  `;
+
+  res.send(html);
 });
 
-// Arranque
-const PORT = process.env.FRONTEND_PORT || 5173;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ FRONTEND dev server ON http://0.0.0.0:${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Frontend server corriendo en http://127.0.0.1:${PORT}`);
 });
-

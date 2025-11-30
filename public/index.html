@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>I GUIDE U – Frontend</title>
+</head>
+<body>
+  <h1>I GUIDE U – Frontend conectado</h1>
+
+  <h2>Status del backend:</h2>
+  <pre id="status">Cargando...</pre>
+
+  <hr>
+
+  <h2>Pago de prueba (Stripe)</h2>
+  <p>Monto: <strong>USD 10</strong> (test)</p>
+  <button id="payBtn">Realizar pago de prueba</button>
+
+  <pre id="payStatus"></pre>
+
+  <script>
+    async function testHealth() {
+      try {
+        const res = await fetch("/api/health");
+        const data = await res.json();
+        document.getElementById("status").textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        document.getElementById("status").textContent = "Error: " + err.message;
+      }
+    }
+
+    async function createTestCheckout() {
+      const payStatusEl = document.getElementById("payStatus");
+      payStatusEl.textContent = "Creando sesión de pago...";
+
+      try {
+        const res = await fetch("/api/payments/create-checkout", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json"
+          },
+          body: JSON.stringify({
+            amount: 1000,   // 10 USD
+            currency: "usd"
+          })
+        });
+
+        const data = await res.json();
+        payStatusEl.textContent = JSON.stringify(data, null, 2);
+
+        if (data.ok && data.url) {
+          // Redirigir a Stripe Checkout
+          window.location.href = data.url;
+        } else {
+          alert("Error al crear Checkout: " + (data.error || "desconocido"));
+        }
+      } catch (err) {
+        payStatusEl.textContent = "Error: " + err.message;
+        alert("Error al llamar a /api/payments/create-checkout: " + err.message);
+      }
+    }
+
+    document.getElementById("payBtn").addEventListener("click", createTestCheckout);
+
+    // Al cargar la página, probamos el health
+    testHealth();
+  </script>
+</body>
+</html>
+
